@@ -4,6 +4,7 @@ import {
   ArrowRight,
   CheckCircle2,
   Heart,
+  MessageCircleHeart,
   Moon,
   PlayCircle,
   ReceiptText,
@@ -15,6 +16,7 @@ import {
 } from "lucide-react";
 import { CountUpText } from "@/components/landing/CountUpText";
 import { HeroVisual } from "@/components/landing/HeroVisual";
+import { KostSetupShowcase } from "@/components/landing/KostSetupShowcase";
 import { Footer } from "@/components/layout/Footer";
 import { PageTransition } from "@/components/layout/PageTransition";
 import { PublicNavbar } from "@/components/layout/PublicNavbar";
@@ -24,6 +26,30 @@ import { Card } from "@/components/ui/Card";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 
 export default function LandingPage() {
+  const testimonials = [
+    {
+      name: "Rian",
+      role: "Mahasiswa Teknik",
+      quote: "Dulu akhir bulan cuma mie instan. Sekarang masih bisa makan ayam, telur, sayur, dan budget tetap kebaca.",
+      saved: 185000,
+      tag: "Rice cooker team",
+    },
+    {
+      name: "Sinta",
+      role: "Freelancer",
+      quote: "Shopping list-nya bikin belanja nggak random. Aku jadi tahu bahan mana yang bisa dipakai buat beberapa menu.",
+      saved: 142000,
+      tag: "Meal prep 3 hari",
+    },
+    {
+      name: "Andi",
+      role: "Karyawan rantau",
+      quote: "Pulang kerja biasanya beli asal. Sekarang menu malam sudah kebayang dan estimasi harganya masuk akal.",
+      saved: 210000,
+      tag: "Pulang malam",
+    },
+  ];
+
   return (
     <PageTransition>
       <PublicNavbar />
@@ -186,28 +212,81 @@ export default function LandingPage() {
           </Card>
         </section>
 
-        <section className="bg-white py-16">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-10">
-            <p className="text-center text-sm font-bold uppercase text-primary">Kata Mereka</p>
-            <div className="mt-8 grid gap-6 md:grid-cols-3">
-              {["Rian, Mahasiswa", "Sinta, Freelancer", "Andi, Karyawan"].map((name) => (
-                <Card key={name} className="p-7">
-                  <div className="flex text-orange">{Array.from({ length: 5 }).map((_, i) => <Star key={i} className="h-4 w-4 fill-current" />)}</div>
-                  <p className="mt-4 text-text-secondary">
-                    &ldquo;Berkat KostMeal, saya bisa nabung lebih banyak buat beli gadget baru tanpa harus kelaparan.&rdquo;
+        <section id="harga" className="bg-white px-4 py-20 sm:px-6 lg:px-10">
+          <div className="mx-auto max-w-7xl">
+            <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-end">
+              <div>
+                <Badge className="normal-case">
+                  <MessageCircleHeart className="mr-1 h-3 w-3" />
+                  Cerita Anak Kost
+                </Badge>
+                <h2 className="mt-5 max-w-lg text-3xl font-black leading-tight text-text-primary md:text-5xl">
+                  Bukan cuma sehat, tapi belanja mingguan jadi lebih jelas.
+                </h2>
+                <p className="mt-5 max-w-md leading-7 text-text-secondary">
+                  KostMeal paling berguna saat pilihan makan harus realistis: alat masak terbatas, kulkas bareng, dan budget harian perlu dijaga.
+                </p>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-3">
+                <div className="rounded-2xl border border-border-soft bg-soft-green p-5">
+                  <p className="text-xs font-bold uppercase text-text-secondary">Rata-rata hemat</p>
+                  <p className="mt-3 text-3xl font-black text-primary">
+                    <CountUpText value={179000} prefix="Rp " />
                   </p>
-                  <b className="mt-5 block">{name}</b>
+                  <p className="mt-2 text-sm text-text-secondary">per bulan dari menu lebih terencana</p>
+                </div>
+                <div className="rounded-2xl border border-border-soft bg-[#fff7ed] p-5">
+                  <p className="text-xs font-bold uppercase text-text-secondary">Menu cepat</p>
+                  <p className="mt-3 text-3xl font-black text-brown-orange">
+                    <CountUpText value={18} suffix=" menit" />
+                  </p>
+                  <p className="mt-2 text-sm text-text-secondary">estimasi masak untuk hari sibuk</p>
+                </div>
+                <div className="rounded-2xl border border-border-soft bg-white p-5 shadow-card">
+                  <p className="text-xs font-bold uppercase text-text-secondary">Budget aman</p>
+                  <p className="mt-3 text-3xl font-black text-text-primary">
+                    <CountUpText value={35} suffix="rb" />
+                  </p>
+                  <p className="mt-2 text-sm text-text-secondary">target makan harian anak kost</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-10 grid gap-6 lg:grid-cols-3">
+              {testimonials.map((item, index) => (
+                <Card key={item.name} className="overflow-hidden p-0">
+                  <div className="border-b border-border-soft bg-soft-green/70 px-6 py-4">
+                    <div className="flex items-center justify-between">
+                      <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-primary">{item.tag}</span>
+                      <div className="flex text-orange">
+                        {Array.from({ length: 5 }).map((_, starIndex) => (
+                          <Star key={starIndex} className="h-4 w-4 fill-current" />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="p-6">
+                    <p className="min-h-[112px] leading-7 text-text-secondary">&ldquo;{item.quote}&rdquo;</p>
+                    <div className="mt-6 flex items-end justify-between gap-4">
+                      <div>
+                        <b className="block text-text-primary">{item.name}</b>
+                        <span className="text-sm text-text-secondary">{item.role}</span>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs font-bold uppercase text-text-secondary">Hemat</p>
+                        <p className="font-black text-primary">
+                          <CountUpText value={item.saved} prefix="Rp " />
+                        </p>
+                      </div>
+                    </div>
+                    <ProgressBar value={[72, 58, 84][index]} className="mt-5" delay={index * 0.1} />
+                  </div>
                 </Card>
               ))}
             </div>
-          </div>
-        </section>
 
-        <section id="harga" className="px-4 py-16 sm:px-6 lg:px-10">
-          <div className="mx-auto max-w-7xl rounded-[2rem] bg-primary-light px-6 py-16 text-center text-primary-dark">
-            <h2 className="text-3xl font-black md:text-5xl">Siap Untuk Hidup Lebih Sehat &amp; Hemat?</h2>
-            <p className="mx-auto mt-5 max-w-xl">Bergabunglah dengan ribuan anak kos lainnya dan mulai petualangan kuliner hematmu hari ini.</p>
-            <Link href="/login"><Button className="mt-8">Daftar Sekarang - Gratis!</Button></Link>
+            <KostSetupShowcase />
           </div>
         </section>
       </main>
