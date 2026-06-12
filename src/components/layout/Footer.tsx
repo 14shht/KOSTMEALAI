@@ -1,49 +1,82 @@
-import { Send } from "lucide-react";
+import Link from "next/link";
+import { BrandLogo } from "@/components/layout/BrandLogo";
 import { appName } from "@/lib/constants";
 
 export function Footer() {
+  const navigationLinks = [
+    { href: "/", label: "Beranda" },
+    { href: "#fitur", label: "Fitur Utama", active: true },
+    { href: "#resep", label: "Resep" },
+    { href: "/login", label: "Masuk" },
+    { href: "/login", label: "Daftar Sekarang" },
+  ];
+
+  const featureLinks = [
+    "AI Meal Generator",
+    "Pantau Nutrisi",
+    "Smart Shopping List",
+  ];
+
+  const supportLinks = [
+    "Pusat Bantuan",
+    "Kontak Kami",
+    "Kebijakan Privasi",
+    "Syarat & Ketentuan",
+  ];
+
   return (
-    <footer className="bg-[#243027] text-white">
-      <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-4 lg:px-10">
-        <div>
-          <h2 className="text-xl font-bold text-primary-light">{appName}</h2>
-          <p className="mt-4 text-sm text-white/65">
-            Solusi nutrisi dan manajemen budget cerdas untuk gaya hidup modern.
-          </p>
-        </div>
-        <div>
-          <h3 className="font-semibold">Produk</h3>
-          <ul className="mt-4 space-y-2 text-sm text-white/60">
-            <li>Generate Menu</li>
-            <li>Daftar Belanja</li>
-            <li>Nutrient Tracker</li>
-          </ul>
-        </div>
-        <div>
-          <h3 className="font-semibold">Perusahaan</h3>
-          <ul className="mt-4 space-y-2 text-sm text-white/60">
-            <li>Tentang Kami</li>
-            <li>Karir</li>
-            <li>Kontak</li>
-          </ul>
-        </div>
-        <div>
-          <h3 className="font-semibold">Newsletter</h3>
-          <p className="mt-4 text-sm text-white/60">Dapatkan tips hemat dan resep baru setiap minggu.</p>
-          <div className="mt-4 flex rounded-full bg-white/10 p-1">
-            <input
-              aria-label="Email newsletter"
-              placeholder="Email kamu"
-              className="min-w-0 flex-1 bg-transparent px-4 text-sm outline-none placeholder:text-white/35"
-            />
-            <button aria-label="Kirim newsletter" className="rounded-full bg-primary-light p-2 text-primary-dark">
-              <Send className="h-4 w-4" />
-            </button>
+    <footer className="border-t border-border-soft bg-white text-text-primary">
+      <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-10">
+        <div className="grid gap-12 md:grid-cols-[1.5fr_1fr_1fr_1fr]">
+          <div>
+            <BrandLogo textClassName="text-xl" />
+            <p className="mt-5 max-w-xs text-sm font-semibold leading-6">
+              Makan sehat, budget tetap waras
+            </p>
+            <p className="mt-4 max-w-xs text-sm leading-7 text-text-secondary">
+              Bantu anak kos merencanakan menu bergizi, pantau nutrisi harian,
+              dan hemat belanja dengan bantuan AI.
+            </p>
+          </div>
+
+          <div>
+            <h3 className="text-sm font-bold text-text-secondary/60">Navigasi</h3>
+            <ul className="mt-6 space-y-5 text-sm">
+              {navigationLinks.map((item) => (
+                <li key={`${item.href}-${item.label}`}>
+                  <Link
+                    href={item.href}
+                    className={item.active ? "font-medium text-primary" : "text-text-secondary hover:text-primary"}
+                  >
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <h3 className="text-sm font-bold text-text-secondary/60">Fitur</h3>
+            <ul className="mt-6 space-y-5 text-sm text-text-secondary">
+              {featureLinks.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <h3 className="text-sm font-bold text-text-secondary/60">Dukungan</h3>
+            <ul className="mt-6 space-y-5 text-sm text-text-secondary">
+              {supportLinks.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
           </div>
         </div>
-      </div>
-      <div className="border-t border-white/10 py-5 text-center text-xs text-white/35">
-        © 2024 KostMeal AI. All rights reserved.
+
+        <div className="mt-12 border-t border-border-soft pt-8 text-sm text-text-secondary">
+          <p>&copy; 2026 {appName}. All rights reserved.</p>
+        </div>
       </div>
     </footer>
   );

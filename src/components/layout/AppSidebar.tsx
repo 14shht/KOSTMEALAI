@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { appName, appNavItems } from "@/lib/constants";
+import { BrandLogo } from "@/components/layout/BrandLogo";
+import { appNavItems } from "@/lib/constants";
 import { user } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
 
@@ -12,7 +13,7 @@ export function AppSidebar() {
   return (
     <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 border-r border-border-soft bg-soft-green/80 px-4 py-6 lg:flex lg:flex-col">
       <div className="px-2">
-        <h2 className="text-2xl font-bold text-primary">{appName}</h2>
+        <BrandLogo href="/dashboard" markClassName="h-10 w-10" textClassName="text-2xl" />
         <p className="text-sm text-text-secondary">Anak Kos Edition</p>
       </div>
 

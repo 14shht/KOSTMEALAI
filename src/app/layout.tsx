@@ -10,6 +10,11 @@ const geist = Geist({
 export const metadata: Metadata = {
   title: "KostMeal AI",
   description: "Meal planner hemat dan sehat untuk anak kos Indonesia.",
+  icons: {
+    icon: "/assets/logo-mark.svg",
+    shortcut: "/assets/logo-mark.svg",
+    apple: "/assets/logo-mark.svg",
+  },
 };
 
 export default function RootLayout({
