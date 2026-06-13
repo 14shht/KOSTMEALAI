@@ -42,7 +42,10 @@ export function MealCard({ title, mealType, time, price, calories, protein, imag
                 <span><b className="block text-xs">CAL</b>{calories}</span>
                 <span><b className="block text-xs">PROT</b>{protein}</span>
               </div>
-              <div className="flex h-8 w-8 items-center justify-center rounded-full border border-primary bg-primary text-white">
+              <div className={cn(
+                "flex h-8 w-8 items-center justify-center rounded-full border transition duration-300",
+                ready ? "border-primary bg-primary text-white" : "border-primary bg-white text-primary",
+              )}>
                 {ready ? <Check className="h-5 w-5" /> : <Timer className="h-5 w-5 text-primary" />}
               </div>
             </div>

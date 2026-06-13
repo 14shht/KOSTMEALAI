@@ -28,7 +28,9 @@ export default function DashboardPage() {
         <section>
           <div className="mb-6 flex items-center justify-between">
             <h2 className="text-2xl font-bold">Menu Hari Ini</h2>
-            <Link href="/meal-plan-result" className="font-semibold text-primary">Lihat Semua →</Link>
+            <Link href="/meal-plan-result" className="font-semibold text-primary transition duration-300 hover:text-primary-dark">
+              Lihat Semua →
+            </Link>
           </div>
           <div className="grid gap-5 md:grid-cols-2">
             {todayMeals.map((meal) => <MealCard key={meal.title} {...meal} />)}

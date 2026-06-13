@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 
 export const appName = "KostMeal AI";
+export const defaultOpenAIModel = "gpt-4.1-mini";
 
 export const appNavItems = [
   { href: "/dashboard", label: "Dashboard", icon: Grid2X2 },

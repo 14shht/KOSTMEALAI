@@ -108,16 +108,16 @@ function AuthField({ error, icon, inputProps }: AuthFieldProps) {
       <label
         htmlFor={inputId}
         className={cn(
-          "focus-within:border-primary-light focus-within:bg-white focus-within:shadow-[0_10px_28px_rgba(0,122,61,0.08)]",
-          "flex h-13 w-full items-center gap-3 rounded-full border border-[#dfe3ea] bg-white/88 px-5 transition",
+          "focus-within:border-primary focus-within:bg-white focus-within:shadow-[0_12px_32px_rgba(0,122,61,0.10)]",
+          "flex h-13 w-full items-center gap-3 rounded-full border border-border-soft bg-white px-5 transition duration-300 ease-out",
           error && "border-danger/60",
         )}
       >
-        <Icon className="h-5 w-5 shrink-0 text-[#94a0b4]" aria-hidden="true" />
+        <Icon className="h-5 w-5 shrink-0 text-text-secondary/70 transition-colors duration-300" aria-hidden="true" />
         <input
           {...inputProps}
           id={inputId}
-          className="h-full min-w-0 flex-1 bg-transparent text-sm font-semibold text-text-primary outline-none placeholder:text-[#9aa4b6]"
+          className="auth-input h-full min-w-0 flex-1 bg-transparent text-sm font-semibold text-text-primary caret-primary outline-none placeholder:text-text-secondary/55"
         />
       </label>
       {error ? <p className="mt-1.5 px-5 text-xs font-medium text-danger">{error}</p> : null}
@@ -178,9 +178,8 @@ export function AuthForm() {
   }
 
   return (
-    <div className="auth-stage relative flex h-dvh max-h-dvh w-full overflow-hidden bg-[#fbfffc] px-5 py-7 text-text-primary">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_7%_18%,rgba(82,205,73,0.28)_0,rgba(82,205,73,0.18)_12%,transparent_32%),radial-gradient(circle_at_94%_78%,rgba(82,205,73,0.30)_0,rgba(82,205,73,0.18)_15%,transparent_36%),radial-gradient(circle_at_67%_54%,rgba(82,205,73,0.12)_0,transparent_23%)]" />
-      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.68)_0%,rgba(255,255,255,0.96)_38%,rgba(255,255,255,0.76)_100%)]" />
+    <div className="auth-stage relative flex h-dvh max-h-dvh w-full overflow-hidden bg-white px-5 py-7 text-text-primary">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_8%_18%,rgba(0,122,61,0.10)_0,transparent_28%),radial-gradient(circle_at_94%_78%,rgba(0,122,61,0.10)_0,transparent_30%)]" />
 
       <div className="relative z-10 mx-auto flex h-full min-h-0 w-full max-w-[540px] flex-col items-center justify-center">
         <AnimatePresence mode="wait" custom={mode}>

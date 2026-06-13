@@ -6,7 +6,7 @@ import { PageTransition } from "./PageTransition";
 
 export function AppShell({ children }: { children: ReactNode }) {
   return (
-    <div className="min-h-screen bg-soft-green">
+    <div className="min-h-screen bg-white">
       <AppSidebar />
       <MobileHeader />
       <main className="pb-24 lg:ml-64 lg:pb-0">

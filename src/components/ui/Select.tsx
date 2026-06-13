@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 
 type SelectProps = SelectHTMLAttributes<HTMLSelectElement> & {
   label: string;
-  options: string[];
+  options: Array<string | { label: string; value: string | number }>;
 };
 
 export function Select({ label, options, className, id, ...props }: SelectProps) {
@@ -22,7 +22,11 @@ export function Select({ label, options, className, id, ...props }: SelectProps)
           {...props}
         >
           {options.map((option) => (
-            <option key={option}>{option}</option>
+            typeof option === "string" ? (
+              <option key={option}>{option}</option>
+            ) : (
+              <option key={option.value} value={option.value}>{option.label}</option>
+            )
           ))}
         </select>
         <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-text-secondary" />
