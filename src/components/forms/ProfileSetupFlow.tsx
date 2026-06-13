@@ -161,14 +161,16 @@ export function ProfileSetupFlow() {
     schedule: "",
     goal: "",
   });
+  const safeCurrentStep = Math.min(Math.max(currentStep, 0), steps.length - 1);
+  const step = steps[safeCurrentStep];
 
   const canContinue = useMemo(() => {
-    if (currentStep === 0) return Boolean(data.budget);
-    if (currentStep === 1) return Boolean(data.cookingTool);
-    if (currentStep === 2) return Boolean(data.storage);
-    if (currentStep === 3) return Boolean(data.schedule);
+    if (safeCurrentStep === 0) return Boolean(data.budget);
+    if (safeCurrentStep === 1) return Boolean(data.cookingTool);
+    if (safeCurrentStep === 2) return Boolean(data.storage);
+    if (safeCurrentStep === 3) return Boolean(data.schedule);
     return Boolean(data.goal);
-  }, [currentStep, data]);
+  }, [safeCurrentStep, data]);
 
   function updateData(key: keyof SetupData, value: string) {
     setData((current) => ({ ...current, [key]: value }));
@@ -176,22 +178,20 @@ export function ProfileSetupFlow() {
 
   function goNext() {
     if (!canContinue) return;
-    if (currentStep === steps.length - 1) {
+    if (safeCurrentStep === steps.length - 1) {
       router.push("/dashboard");
       return;
     }
-    setCurrentStep((step) => step + 1);
+    setCurrentStep((stepIndex) => Math.min(stepIndex + 1, steps.length - 1));
   }
 
   function goBack() {
-    if (currentStep === 0) {
+    if (safeCurrentStep === 0) {
       router.push("/login");
       return;
     }
-    setCurrentStep((step) => step - 1);
+    setCurrentStep((stepIndex) => Math.max(stepIndex - 1, 0));
   }
-
-  const step = steps[currentStep];
 
   return (
     <div className="relative flex h-dvh max-h-dvh w-full overflow-hidden bg-[#fbfffc] px-5 py-7 text-[#121827]">
@@ -219,13 +219,13 @@ export function ProfileSetupFlow() {
           >
             <ArrowLeft className="h-6 w-6" />
           </button>
-          <SetupProgress currentStep={currentStep} />
+          <SetupProgress currentStep={safeCurrentStep} />
         </div>
 
         <div className="mx-auto flex min-h-0 w-full max-w-[560px] flex-1 flex-col items-center justify-center overflow-y-auto pb-4 pt-8">
           <AnimatePresence mode="wait">
             <motion.div
-              key={currentStep}
+              key={safeCurrentStep}
               variants={screenVariants}
               initial="hidden"
               animate="visible"
@@ -239,7 +239,7 @@ export function ProfileSetupFlow() {
               <p className="mt-4 text-center text-sm font-bold text-[#697589]">{step.helper}</p>
 
               <div className="mt-8 space-y-4">
-                {currentStep === 0 ? (
+                {safeCurrentStep === 0 ? (
                   budgetOptions.map((option, index) => (
                     <motion.div key={option} custom={index} variants={fieldVariants} initial="hidden" animate="visible">
                       <ChoiceButton
@@ -253,7 +253,7 @@ export function ProfileSetupFlow() {
                   ))
                 ) : null}
 
-                {currentStep === 1
+                {safeCurrentStep === 1
                   ? cookingToolOptions.map((option, index) => (
                       <motion.div key={option} custom={index} variants={fieldVariants} initial="hidden" animate="visible">
                         <ChoiceButton
@@ -267,7 +267,7 @@ export function ProfileSetupFlow() {
                     ))
                   : null}
 
-                {currentStep === 2
+                {safeCurrentStep === 2
                   ? storageOptions.map((option, index) => (
                       <motion.div key={option} custom={index} variants={fieldVariants} initial="hidden" animate="visible">
                         <ChoiceButton
@@ -281,7 +281,7 @@ export function ProfileSetupFlow() {
                     ))
                   : null}
 
-                {currentStep === 3
+                {safeCurrentStep === 3
                   ? scheduleOptions.map((option, index) => (
                       <motion.div key={option} custom={index} variants={fieldVariants} initial="hidden" animate="visible">
                         <ChoiceButton
@@ -295,7 +295,7 @@ export function ProfileSetupFlow() {
                     ))
                   : null}
 
-                {currentStep === 4
+                {safeCurrentStep === 4
                   ? goalOptions.map((option, index) => (
                       <motion.div key={option} custom={index} variants={fieldVariants} initial="hidden" animate="visible">
                         <ChoiceButton
@@ -317,7 +317,7 @@ export function ProfileSetupFlow() {
                   disabled={!canContinue}
                   className="mt-10 h-14 w-full bg-[#52bf3f] font-black shadow-[0_12px_22px_rgba(82,191,63,0.26)] hover:bg-[#42ad35]"
                 >
-                  {currentStep === steps.length - 1 ? "Selesai" : "Lanjut"}
+                  {safeCurrentStep === steps.length - 1 ? "Selesai" : "Lanjut"}
                 </Button>
               </motion.div>
             </motion.div>

@@ -3,7 +3,6 @@ import {
   Activity,
   ArrowRight,
   CheckCircle2,
-  Heart,
   MessageCircleHeart,
   Moon,
   PlayCircle,
@@ -17,6 +16,7 @@ import {
 import { CountUpText } from "@/components/landing/CountUpText";
 import { HeroVisual } from "@/components/landing/HeroVisual";
 import { KostSetupShowcase } from "@/components/landing/KostSetupShowcase";
+import { ScheduleMealCard } from "@/components/landing/ScheduleMealCard";
 import { Footer } from "@/components/layout/Footer";
 import { PageTransition } from "@/components/layout/PageTransition";
 import { PublicNavbar } from "@/components/layout/PublicNavbar";
@@ -197,19 +197,7 @@ export default function LandingPage() {
               ))}
             </div>
           </div>
-          <Card className="mx-auto w-full max-w-md overflow-hidden">
-            <div
-              className="h-64 bg-cover bg-center"
-              style={{ backgroundImage: "url('/assets/foods/buddha-bowl-sayur.png')" }}
-            />
-            <div className="p-6">
-              <div className="flex justify-between"><div><h3 className="text-2xl font-bold">Super Quinoa Bowl</h3><p className="text-sm text-primary">Estimasi biaya: <CountUpText value={18000} prefix="Rp " /></p></div><Heart className="h-6 w-6" /></div>
-              <div className="mt-6 grid grid-cols-4 gap-3 text-center text-xs font-bold text-text-secondary">
-                <span><CountUpText value={450} /><br />Kalori</span><span><CountUpText value={18} suffix="g" /><br />Protein</span><span><CountUpText value={64} suffix="g" /><br />Karbo</span><span><CountUpText value={22} suffix="g" /><br />Lemak</span>
-              </div>
-              <Button variant="orange" className="mt-6 w-full">Tambah ke Jadwal</Button>
-            </div>
-          </Card>
+          <ScheduleMealCard />
         </section>
 
         <section id="harga" className="bg-white px-4 py-20 sm:px-6 lg:px-10">
