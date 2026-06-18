@@ -1,23 +1,24 @@
+"use client";
+
 import Link from "next/link";
 import { Plus, Sparkles } from "lucide-react";
 import { MealCard } from "@/components/cards/MealCard";
 import { NutritionCard } from "@/components/cards/NutritionCard";
 import { SummaryCard } from "@/components/cards/SummaryCard";
 import { WeeklyPreviewCard } from "@/components/cards/WeeklyPreviewCard";
+import { DashboardGreeting } from "@/components/dashboard/DashboardGreeting";
 import { AppShell } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { SectionHeader } from "@/components/ui/SectionHeader";
+import { useAuthUser } from "@/lib/hooks/use-auth-user";
 import { summaryCards, todayMeals } from "@/lib/mock-data";
 
 export default function DashboardPage() {
+  const { authUser } = useAuthUser();
+
   return (
     <AppShell>
-      <SectionHeader
-        title="Halo, Faiq 👋"
-        subtitle="Hari ini rencanamu: Masakan rumahan hemat energi."
-        action={<p className="hidden font-medium text-text-secondary md:block">Kamis, 24 Okt 2023</p>}
-      />
+      <DashboardGreeting authUser={authUser} />
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {summaryCards.map((card) => (
           <SummaryCard key={card.label} {...card} />

@@ -10,18 +10,19 @@ import { z } from "zod";
 import type { Variants } from "framer-motion";
 import { BrandLogo } from "@/components/layout/BrandLogo";
 import { Button } from "@/components/ui/Button";
+import { createAuthUser, saveAuthUser } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
 const loginSchema = z.object({
   email: z.email("Email tidak valid"),
   password: z.string().min(6, "Password minimal 6 karakter"),
-  username: z.string().optional(),
+  fullName: z.string().optional(),
   confirmPassword: z.string().optional(),
 });
 
 const registerSchema = z
   .object({
-    username: z.string().min(3, "Username minimal 3 karakter"),
+    fullName: z.string().min(3, "Nama lengkap minimal 3 karakter"),
     email: z.email("Email tidak valid"),
     password: z.string().min(6, "Password minimal 6 karakter"),
     confirmPassword: z.string().min(6, "Konfirmasi password minimal 6 karakter"),
@@ -147,7 +148,7 @@ export function AuthForm() {
     formState: { errors, isSubmitting },
   } = useForm<AuthValues>({
     resolver: zodResolver(activeSchema),
-    defaultValues: { email: "", password: "", username: "", confirmPassword: "" },
+    defaultValues: { email: "", password: "", fullName: "", confirmPassword: "" },
   });
 
   useEffect(() => {
@@ -159,22 +160,20 @@ export function AuthForm() {
   function switchMode(nextMode: AuthMode) {
     if (nextMode === mode) return;
     clearErrors();
-    reset({ email: "", password: "", username: "", confirmPassword: "" });
+    reset({ email: "", password: "", fullName: "", confirmPassword: "" });
     setNotice("");
     setShowForm(false);
     setMode(nextMode);
   }
 
-  async function onSubmit() {
-    if (mode === "register") {
-      reset({ email: "", password: "", username: "", confirmPassword: "" });
-      setNotice("Akun berhasil dibuat. Silakan masuk dulu untuk lanjut setup profil.");
-      setMode("login");
-      setShowForm(true);
-      return;
-    }
+  async function onSubmit(values: AuthValues) {
+    const authUser = createAuthUser({
+      email: values.email,
+      fullName: mode === "register" ? values.fullName : undefined,
+    });
 
-    router.push("/profile/setup");
+    saveAuthUser(authUser);
+    router.push("/dashboard");
   }
 
   return (
@@ -273,12 +272,12 @@ export function AuthForm() {
                         >
                           <AuthField
                             icon="username"
-                            error={errors.username?.message}
+                            error={errors.fullName?.message}
                             inputProps={{
                               type: "text",
-                              placeholder: "Username",
-                              autoComplete: "username",
-                              ...register("username"),
+                              placeholder: "Nama Lengkap",
+                              autoComplete: "name",
+                              ...register("fullName"),
                             }}
                           />
                         </motion.div>

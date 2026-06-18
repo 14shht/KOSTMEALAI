@@ -12,14 +12,6 @@ import {
 } from "lucide-react";
 import { foodImages } from "./constants";
 
-export const user = {
-  name: "Faiq",
-  fullName: "Budi Santoso",
-  subtitle: "Anak Kos Hemat",
-  plan: "Premium Member",
-  initials: "F",
-};
-
 export const summaryCards = [
   {
     label: "Sisa Budget",
@@ -38,8 +30,8 @@ export const summaryCards = [
     icon: Flame,
   },
   {
-    label: "Plan Aktif",
-    value: '"Kos Hemat Pro"',
+    label: "Rencana Mingguan",
+    value: "Aktif",
     meta: "Status",
     caption: "4 hari tersisa",
     icon: CalendarDays,

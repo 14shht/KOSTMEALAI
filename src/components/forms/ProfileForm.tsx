@@ -1,17 +1,22 @@
+"use client";
+
 import { IdCard } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Chip } from "@/components/ui/Chip";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
+import { useAuthUser } from "@/lib/hooks/use-auth-user";
 
 export function ProfileForm() {
+  const { authUser } = useAuthUser();
+
   return (
     <Card className="p-6" hover={false}>
       <h2 className="mb-6 flex items-center gap-2 text-lg font-semibold"><IdCard className="h-5 w-5 text-primary" />Informasi Pengguna</h2>
       <div className="grid gap-5 md:grid-cols-2">
-        <Input label="Nama Lengkap" defaultValue="Budi Santoso" />
-        <Input label="Email" defaultValue="budi.santoso@email.com" />
+        <Input label="Nama Lengkap" value={authUser.displayName} readOnly />
+        <Input label="Email" value={authUser.email} readOnly />
         <Select label="Pekerjaan" options={["Karyawan Swasta", "Mahasiswa", "Freelancer"]} />
         <Input label="Domisili" defaultValue="Jakarta Selatan" />
       </div>

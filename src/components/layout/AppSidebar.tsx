@@ -2,13 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { LogoutButton } from "@/components/auth/LogoutButton";
 import { BrandLogo } from "@/components/layout/BrandLogo";
 import { appNavItems } from "@/lib/constants";
-import { user } from "@/lib/mock-data";
+import { useAuthUser } from "@/lib/hooks/use-auth-user";
 import { cn } from "@/lib/utils";
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const { authUser } = useAuthUser();
 
   return (
     <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 border-r border-border-soft bg-white px-4 py-6 shadow-[18px_0_45px_rgba(22,29,23,0.04)] lg:flex lg:flex-col">
@@ -40,12 +42,13 @@ export function AppSidebar() {
       <div className="mt-auto border-t border-border-soft pt-5">
         <div className="flex items-center gap-3 rounded-xl bg-soft-green p-2 transition duration-300 hover:bg-muted-green/70">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-light font-bold text-primary-dark">
-            {user.initials}
+            {authUser.initials}
           </div>
-          <div>
-            <p className="text-sm font-semibold text-text-primary">{user.fullName}</p>
-            <p className="text-xs uppercase text-text-secondary">{user.plan}</p>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-text-primary">{authUser.displayName}</p>
+            <p className="truncate text-xs text-text-secondary">{authUser.email}</p>
           </div>
+          <LogoutButton className="h-9 w-9 shrink-0" />
         </div>
       </div>
     </aside>
