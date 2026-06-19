@@ -15,6 +15,8 @@ import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { useKostMealStore } from "@/lib/store/use-kostmeal-store";
+import { getProfileAvatar, saveProfileAvatar } from "@/lib/profile-avatar";
+import { useAuthUser } from "@/lib/hooks/use-auth-user";
 import type { ProfilePreferences } from "@/lib/types";
 
 const preferenceOptions = ["Indonesia", "Western", "Asian Fusion", "Vegetarian", "Pedas"];
@@ -22,8 +24,12 @@ const cookingToolOptions = ["Rice Cooker", "Kompor Gas", "Air Fryer", "Microwave
 
 export default function ProfilePage() {
   const { showToast } = useToast();
+  const { authUser } = useAuthUser();
   const { profile, updateProfile } = useKostMealStore();
   const [draft, setDraft] = useState<ProfilePreferences>(profile);
+  const [draftAvatarUrl, setDraftAvatarUrl] = useState<string | null>(() => (
+    authUser ? getProfileAvatar(authUser.email) : null
+  ));
   const [newAllergy, setNewAllergy] = useState("");
   const [showAllergyInput, setShowAllergyInput] = useState(false);
 
@@ -50,14 +56,20 @@ export default function ProfilePage() {
 
   const saveChanges = () => {
     updateProfile(draft);
-    showToast("Perubahan profil berhasil disimpan.");
+    if (authUser) saveProfileAvatar(authUser.email, draftAvatarUrl);
+    showToast("Perubahan profil dan foto berhasil disimpan.");
+  };
+
+  const cancelChanges = () => {
+    setDraft(profile);
+    setDraftAvatarUrl(authUser ? getProfileAvatar(authUser.email) : null);
   };
 
   return (
     <AppShell>
       <SectionHeader title="Pengaturan Profil" subtitle="Personalisasi pengalaman makan hemat & sehat sesuai gaya hidupmu." />
       <div className="grid gap-6 lg:grid-cols-[300px_1fr]">
-        <ProfileCard />
+        <ProfileCard avatarUrl={draftAvatarUrl} onAvatarChange={setDraftAvatarUrl} />
         <Card className="p-6" hover={false}>
           <h2 className="mb-6 flex items-center gap-2 text-lg font-semibold"><IdCard className="h-5 w-5 text-primary" />Informasi Pengguna</h2>
           <div className="grid gap-5 md:grid-cols-2">
@@ -123,7 +135,7 @@ export default function ProfilePage() {
       <div className="mt-6 flex flex-col gap-4 rounded-2xl border border-border-soft bg-muted-green p-5 sm:flex-row sm:items-center sm:justify-between">
         <p className="flex gap-3 text-text-secondary"><AlertCircle className="h-5 w-5" />Perubahan akan langsung diterapkan pada rekomendasi menu berikutnya.</p>
         <div className="flex gap-3">
-          <Button type="button" variant="ghost" onClick={() => setDraft(profile)}>Batalkan</Button>
+          <Button type="button" variant="ghost" onClick={cancelChanges}>Batalkan</Button>
           <Button type="button" onClick={saveChanges}>Simpan Perubahan</Button>
         </div>
       </div>

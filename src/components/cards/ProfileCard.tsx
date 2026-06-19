@@ -1,30 +1,26 @@
 "use client";
 
 import Image from "next/image";
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { ImagePlus } from "lucide-react";
 import { useToast } from "@/components/feedback/ToastProvider";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { useAuthUser } from "@/lib/hooks/use-auth-user";
-import { readStorage, writeStorage } from "@/lib/storage";
 
 const maxPhotoSizeInBytes = 1.5 * 1024 * 1024;
 
-function avatarStorageKey(email: string) {
-  return `kostmeal.profileAvatar.${email}`;
-}
+type ProfileCardProps = {
+  avatarUrl: string | null;
+  onAvatarChange: (avatarUrl: string) => void;
+};
 
-export function ProfileCard() {
+export function ProfileCard({ avatarUrl, onAvatarChange }: ProfileCardProps) {
   const { authUser } = useAuthUser();
   const { showToast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const displayName = authUser?.displayName ?? "User";
   const initials = authUser?.initials ?? "U";
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(() => (
-    authUser ? readStorage<string | null>(avatarStorageKey(authUser.email), null) : null
-  ));
-
   const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     event.target.value = "";
@@ -44,9 +40,8 @@ export function ProfileCard() {
       const nextAvatarUrl = typeof reader.result === "string" ? reader.result : null;
       if (!nextAvatarUrl) return;
 
-      writeStorage(avatarStorageKey(authUser.email), nextAvatarUrl);
-      setAvatarUrl(nextAvatarUrl);
-      showToast("Foto profil berhasil diperbarui.");
+      onAvatarChange(nextAvatarUrl);
+      showToast("Foto baru siap disimpan.", "info");
     };
     reader.readAsDataURL(file);
   };
