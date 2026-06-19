@@ -203,10 +203,8 @@ export function AuthForm() {
         return;
       }
 
-      if (data.user && data.session) {
-        saveAuthUser(createAuthUserFromSupabaseUser(data.user));
-        router.push(getSetupCompleted(normalizedEmail) ? "/dashboard" : "/profile/setup");
-        return;
+      if (data.session) {
+        await supabase.auth.signOut();
       }
 
       clearErrors();
