@@ -21,7 +21,7 @@ import type { StoredMeal } from "@/lib/types";
 
 export default function DashboardPage() {
   const { authUser } = useAuthUser();
-  const { activeMealPlan, dashboardSummaryCards, todayMealList, toggleMealCompleted, addActiveMeal } = useKostMealStore();
+  const { activeMealPlan, completedMealIds, dashboardSummaryCards, todayMealList, toggleMealCompleted, addActiveMeal } = useKostMealStore();
   const { showToast } = useToast();
   const [selectedMeal, setSelectedMeal] = useState<StoredMeal | null>(null);
   const [snackModalOpen, setSnackModalOpen] = useState(false);
@@ -93,7 +93,7 @@ export default function DashboardPage() {
         </section>
         <aside className="space-y-6">
           <NutritionCard meals={todayMealList} nutritionAnalysis={activeMealPlan?.nutritionAnalysis} />
-          <WeeklyPreviewCard />
+          <WeeklyPreviewCard plan={activeMealPlan} completedMealIds={completedMealIds} />
         </aside>
       </div>
       <Link href="/generate-plan" className="fixed bottom-24 right-4 z-20 lg:bottom-8 lg:right-8">

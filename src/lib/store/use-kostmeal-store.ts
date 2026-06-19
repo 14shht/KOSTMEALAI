@@ -321,6 +321,7 @@ export function useKostMealStore() {
     shoppingList,
     mealHistory,
     profile,
+    completedMealIds,
     todayMealList,
     dashboardSummaryCards,
     saveActiveMealPlan,
