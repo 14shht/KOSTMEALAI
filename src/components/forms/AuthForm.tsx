@@ -356,7 +356,7 @@ export function AuthForm() {
                             error={errors.fullName?.message}
                             inputProps={{
                               type: "text",
-                              placeholder: "Nama Lengkap",
+                                 placeholder: "Nama Lengkap",
                               autoComplete: "name",
                               ...register("fullName"),
                             }}

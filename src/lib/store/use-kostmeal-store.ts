@@ -60,18 +60,22 @@ function dateRange(days: number) {
 
 function planToMeals(plan: GeneratedMealPlan | null, completedMealIds: string[]): StoredMeal[] {
   if (!plan) {
-    return todayMeals.map((meal, index) => ({
-      id: `mock-${index}`,
-      title: meal.title,
-      mealType: meal.mealType,
-      time: meal.time ?? "15 Menit",
-      price: meal.price ?? "Rp 0",
-      calories: meal.calories ?? 0,
-      protein: meal.protein ?? "0g",
-      image: meal.image,
-      tags: meal.mealType ? [meal.mealType] : [],
-      completed: Boolean(meal.ready),
-    }));
+    return todayMeals.map((meal, index) => {
+      const id = `mock-${index}`;
+
+      return {
+        id,
+        title: meal.title,
+        mealType: meal.mealType,
+        time: meal.time ?? "15 Menit",
+        price: meal.price ?? "Rp 0",
+        calories: meal.calories ?? 0,
+        protein: meal.protein ?? "0g",
+        image: meal.image,
+        tags: meal.mealType ? [meal.mealType] : [],
+        completed: completedMealIds.includes(id),
+      };
+    });
   }
 
   return plan.days[0]?.meals.map((meal, index) => {
@@ -182,7 +186,10 @@ export function useKostMealStore() {
       setShoppingList(initialShopping ?? (initialPlan ? planToShoppingItems(initialPlan) : []));
       setMealHistory(readStorage<MealHistoryRecord[]>(mealHistoryKey, []));
       setProfile(getInitialProfile());
-      setCompletedMealIds(readStorage<string[]>(completedMealIdsKey, []));
+      const storedCompletedMealIds = readStorage<string[] | null>(completedMealIdsKey, null);
+      setCompletedMealIds(
+        storedCompletedMealIds ?? (initialPlan ? [] : todayMeals.flatMap((meal, index) => (meal.ready ? [`mock-${index}`] : []))),
+      );
       setActiveExtraMeals(readStorage<StoredMeal[]>(activeExtraMealsKey, []));
       setHydrated(true);
     });
