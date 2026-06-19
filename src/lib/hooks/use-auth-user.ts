@@ -2,31 +2,58 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { clearAuthUser, createAuthUser, getAuthUser, saveAuthUser, type AuthUser } from "@/lib/auth";
-
-const fallbackUser: AuthUser = {
-  email: "faiq@example.com",
-  displayName: "Faiq",
-  initials: "F",
-  membership: "Akun KostMeal",
-};
+import {
+  clearAuthUser,
+  createAuthUser,
+  createAuthUserFromSupabaseUser,
+  getAuthUser,
+  saveAuthUser,
+  type AuthUser,
+} from "@/lib/auth";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export const authUserChangedEvent = "kostmeal.auth.changed";
 
 export function useAuthUser() {
   const router = useRouter();
-  const [authUser, setAuthUser] = useState<AuthUser>(fallbackUser);
+  const [authUser, setAuthUser] = useState<AuthUser | null>(() => getAuthUser());
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const syncUser = () => {
-      setAuthUser(getAuthUser() ?? fallbackUser);
-    };
-    const timer = window.setTimeout(syncUser, 0);
-    window.addEventListener(authUserChangedEvent, syncUser);
+    const supabase = createSupabaseBrowserClient();
+    let active = true;
+
+    supabase.auth.getUser().then(({ data }) => {
+      if (!active) return;
+
+      if (data.user) {
+        const nextUser = createAuthUserFromSupabaseUser(data.user);
+        saveAuthUser(nextUser);
+        setAuthUser(nextUser);
+      } else {
+        clearAuthUser();
+        setAuthUser(null);
+      }
+
+      setIsLoading(false);
+    });
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        const nextUser = createAuthUserFromSupabaseUser(session.user);
+        saveAuthUser(nextUser);
+        setAuthUser(nextUser);
+      } else {
+        clearAuthUser();
+        setAuthUser(null);
+      }
+      setIsLoading(false);
+      window.dispatchEvent(new Event(authUserChangedEvent));
+    });
 
     return () => {
-      window.clearTimeout(timer);
-      window.removeEventListener(authUserChangedEvent, syncUser);
+      active = false;
+      authListener.subscription.unsubscribe();
     };
   }, []);
 
@@ -38,11 +65,13 @@ export function useAuthUser() {
     window.dispatchEvent(new Event(authUserChangedEvent));
   }
 
-  function logout() {
+  async function logout() {
+    const supabase = createSupabaseBrowserClient();
+    await supabase.auth.signOut();
     clearAuthUser();
-    setAuthUser(fallbackUser);
+    setAuthUser(null);
     router.push("/login");
   }
 
-  return { authUser, setUser, logout };
+  return { authUser, isLoading, setUser, logout };
 }

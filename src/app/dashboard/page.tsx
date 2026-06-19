@@ -28,6 +28,8 @@ export default function DashboardPage() {
   const [snackName, setSnackName] = useState("");
   const [snackCalories, setSnackCalories] = useState("200");
 
+  if (!authUser) return null;
+
   const addSnack = () => {
     if (!snackName.trim()) return;
     addActiveMeal({

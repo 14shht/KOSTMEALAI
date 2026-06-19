@@ -18,6 +18,7 @@ export function LogoutButton({ mode = "icon", className }: LogoutButtonProps) {
   const descriptionId = useId();
   const { authUser, logout } = useAuthUser();
   const [open, setOpen] = useState(false);
+  const displayName = authUser?.displayName ?? "User";
 
   useEffect(() => {
     if (!open) return;
@@ -34,7 +35,7 @@ export function LogoutButton({ mode = "icon", className }: LogoutButtonProps) {
 
   function confirmLogout() {
     setOpen(false);
-    logout();
+    void logout();
   }
 
   return (
@@ -92,7 +93,7 @@ export function LogoutButton({ mode = "icon", className }: LogoutButtonProps) {
                     <h2 id={titleId} className="text-xl font-bold">
                       Keluar dari akun?
                     </h2>
-                    <p className="mt-1 text-sm text-text-secondary">{authUser.displayName}</p>
+                    <p className="mt-1 text-sm text-text-secondary">{displayName}</p>
                   </div>
                 </div>
                 <IconButton

@@ -1,13 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, Banknote, ChefHat, Clock3, Home, Snowflake, Target } from "lucide-react";
 import type { Variants } from "framer-motion";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/feedback/ToastProvider";
-import { getAuthUser } from "@/lib/auth";
+import { createAuthUserFromSupabaseUser, getAuthUser, saveAuthUser } from "@/lib/auth";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { writeStorage } from "@/lib/storage";
 import type { ProfilePreferences } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -168,6 +169,25 @@ export function ProfileSetupFlow() {
   });
   const safeCurrentStep = Math.min(Math.max(currentStep, 0), steps.length - 1);
   const step = steps[safeCurrentStep];
+
+  useEffect(() => {
+    const supabase = createSupabaseBrowserClient();
+    let active = true;
+
+    supabase.auth.getUser().then(({ data }) => {
+      if (!active) return;
+      if (!data.user) {
+        router.replace("/login");
+        return;
+      }
+
+      saveAuthUser(createAuthUserFromSupabaseUser(data.user));
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [router]);
 
   const canContinue = useMemo(() => {
     if (safeCurrentStep === 0) return Boolean(data.budget);

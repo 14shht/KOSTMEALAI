@@ -1,3 +1,5 @@
+import type { User } from "@supabase/supabase-js";
+
 export type AuthUser = {
   email: string;
   fullName?: string;
@@ -47,6 +49,19 @@ export function createAuthUser(input: { email: string; fullName?: string }): Aut
     initials: getInitials(displayName),
     membership: defaultMembership,
   };
+}
+
+export function createAuthUserFromSupabaseUser(user: User): AuthUser {
+  const fullName = typeof user.user_metadata?.fullName === "string"
+    ? user.user_metadata.fullName
+    : typeof user.user_metadata?.full_name === "string"
+      ? user.user_metadata.full_name
+      : undefined;
+
+  return createAuthUser({
+    email: user.email ?? "",
+    fullName,
+  });
 }
 
 export function saveAuthUser(user: AuthUser): void {

@@ -10,13 +10,15 @@ import { useAuthUser } from "@/lib/hooks/use-auth-user";
 
 export function ProfileForm() {
   const { authUser } = useAuthUser();
+  const displayName = authUser?.displayName ?? "";
+  const email = authUser?.email ?? "";
 
   return (
     <Card className="p-6" hover={false}>
       <h2 className="mb-6 flex items-center gap-2 text-lg font-semibold"><IdCard className="h-5 w-5 text-primary" />Informasi Pengguna</h2>
       <div className="grid gap-5 md:grid-cols-2">
-        <Input label="Nama Lengkap" value={authUser.displayName} readOnly />
-        <Input label="Email" value={authUser.email} readOnly />
+        <Input label="Nama Lengkap" value={displayName} readOnly />
+        <Input label="Email" value={email} readOnly />
         <Select label="Pekerjaan" options={["Karyawan Swasta", "Mahasiswa", "Freelancer"]} />
         <Input label="Domisili" defaultValue="Jakarta Selatan" />
       </div>

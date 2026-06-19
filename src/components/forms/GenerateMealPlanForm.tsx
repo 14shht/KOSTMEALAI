@@ -190,7 +190,7 @@ export function GenerateMealPlanForm() {
   return (
     <div className="relative">
       <div className="pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full bg-primary-light/25 blur-3xl" />
-      <div className="relative mb-12 px-2 text-center text-sm text-text-secondary sm:px-16">
+      <div className="relative mb-12 px-6 text-center text-sm text-text-secondary sm:px-16">
         <motion.div
           className="absolute left-[calc(16.666%+20px)] right-[calc(16.666%+20px)] top-5 h-1 overflow-hidden rounded-full bg-primary-light/35"
           initial={{ scaleX: 0, opacity: 0 }}
@@ -210,38 +210,43 @@ export function GenerateMealPlanForm() {
           />
         </motion.div>
         <div className="relative z-10 grid grid-cols-3 items-start">
-        {setupSteps.map(([num, label], index) => {
-          const stepNumber = index + 1;
-          const done = generationStep > stepNumber;
-          const active = generationStep === stepNumber;
-          return (
-          <div key={num}>
-            <motion.div
-              className="flex flex-col items-center gap-2"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.08, duration: 0.34, ease: "easeOut" }}
-            >
-              <motion.span
-                className={cn(
-                  "flex h-10 w-10 items-center justify-center rounded-full border-2 shadow-[0_10px_28px_rgba(22,29,23,0.08)] transition-colors duration-300",
-                  done && "border-primary bg-primary text-white",
-                  active && "border-primary bg-white text-primary ring-4 ring-primary-light/55",
-                  !done && !active && "border-primary-light bg-white text-primary",
-                )}
-                animate={active ? { scale: [1, 1.07, 1] } : { scale: 1 }}
-                transition={{ duration: 0.72, repeat: active && isSubmitting ? Infinity : 0, repeatDelay: 0.8, ease: "easeOut" }}
-              >
-                {done ? <Check className="h-5 w-5" /> : num}
-              </motion.span>
-              <b className={cn("transition-colors duration-300", active || done ? "text-primary" : "text-text-primary")}>{label}</b>
-              <span className={cn("text-xs font-medium transition-opacity duration-300", active ? "opacity-100" : "opacity-0")}>
-                {active && isSubmitting ? "Memproses" : "Aktif"}
-              </span>
-            </motion.div>
-          </div>
-          );
-        })}
+          {setupSteps.map(([num, label], index) => {
+            const stepNumber = index + 1;
+            const done = generationStep > stepNumber;
+            const active = generationStep === stepNumber;
+            return (
+              <div key={num} className="min-w-0">
+                <motion.div
+                  className="flex flex-col items-center gap-2"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.08, duration: 0.34, ease: "easeOut" }}
+                >
+                  <motion.span
+                    className={cn(
+                      "flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 shadow-[0_10px_28px_rgba(22,29,23,0.08)] transition-colors duration-300",
+                      done && "border-primary bg-primary text-white",
+                      active && "border-primary bg-white text-primary ring-4 ring-primary-light/55",
+                      !done && !active && "border-primary-light bg-white text-primary",
+                    )}
+                    animate={active ? { scale: [1, 1.07, 1] } : { scale: 1 }}
+                    transition={{
+                      duration: 0.72,
+                      repeat: active && isSubmitting ? Infinity : 0,
+                      repeatDelay: 0.8,
+                      ease: "easeOut",
+                    }}
+                  >
+                    {done ? <Check className="h-5 w-5" /> : num}
+                  </motion.span>
+                  <b className={cn("transition-colors duration-300", active || done ? "text-primary" : "text-text-primary")}>{label}</b>
+                  <span className={cn("text-xs font-medium transition-opacity duration-300", active ? "opacity-100" : "opacity-0")}>
+                    {active && isSubmitting ? "Memproses" : "Aktif"}
+                  </span>
+                </motion.div>
+              </div>
+            );
+          })}
         </div>
       </div>
 

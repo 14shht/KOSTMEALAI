@@ -11,6 +11,9 @@ import { cn } from "@/lib/utils";
 export function AppSidebar() {
   const pathname = usePathname();
   const { authUser } = useAuthUser();
+  const displayName = authUser?.displayName ?? "User";
+  const initials = authUser?.initials ?? "U";
+  const email = authUser?.email ?? "";
 
   return (
     <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 border-r border-border-soft bg-white px-4 py-6 shadow-[18px_0_45px_rgba(22,29,23,0.04)] lg:flex lg:flex-col">
@@ -42,11 +45,11 @@ export function AppSidebar() {
       <div className="mt-auto border-t border-border-soft pt-5">
         <div className="flex items-center gap-3 rounded-xl bg-soft-green p-2 transition duration-300 hover:bg-muted-green/70">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-light font-bold text-primary-dark">
-            {authUser.initials}
+            {initials}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-text-primary">{authUser.displayName}</p>
-            <p className="truncate text-xs text-text-secondary">{authUser.email}</p>
+            <p className="text-sm font-semibold text-text-primary">{displayName}</p>
+            <p className="truncate text-xs text-text-secondary">{email}</p>
           </div>
           <LogoutButton className="h-9 w-9 shrink-0" />
         </div>
