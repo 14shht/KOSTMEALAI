@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AnimatePresence, motion } from "framer-motion";
 import { Lock, Mail, UserRound } from "lucide-react";
@@ -167,6 +167,7 @@ function GoogleSignInButton({
 
 export function AuthForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [mode, setMode] = useState<AuthMode>("login");
   const [showForm, setShowForm] = useState(false);
   const [notice, setNotice] = useState("");
@@ -242,7 +243,9 @@ export function AuthForm() {
     }
 
     saveAuthUser(createAuthUserFromSupabaseUser(data.user));
-    router.push(!getSetupCompleted(normalizedEmail) ? "/profile/setup" : "/dashboard");
+    const nextPath = searchParams.get("next");
+    const safeNextPath = nextPath?.startsWith("/") && !nextPath.startsWith("//") ? nextPath : "/dashboard";
+    router.push(!getSetupCompleted(normalizedEmail) ? "/profile/setup" : safeNextPath);
   }
 
   async function continueWithGoogle() {

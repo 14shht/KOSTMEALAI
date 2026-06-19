@@ -1,16 +1,73 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { CalendarPlus, Check, Heart } from "lucide-react";
 import { CountUpText } from "@/components/landing/CountUpText";
+import { useToast } from "@/components/feedback/ToastProvider";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { useAuthUser } from "@/lib/hooks/use-auth-user";
+import { useKostMealStore } from "@/lib/store/use-kostmeal-store";
+import type { StoredMeal } from "@/lib/types";
 
 const scheduleSlots = ["Sarapan", "Makan Siang", "Makan Malam"];
+const quinoaBowl: StoredMeal = {
+  id: "landing-super-quinoa-bowl",
+  title: "Super Quinoa Bowl",
+  mealType: "Sarapan",
+  time: "20 Menit",
+  price: "Rp 18.000",
+  calories: 450,
+  protein: "18g",
+  image: "/assets/foods/buddha-bowl-sayur.png",
+  tags: ["Sehat", "High Protein"],
+  description: "Quinoa bowl dengan sayuran segar, alpukat, dan buncis panggang.",
+};
 
 export function ScheduleMealCard() {
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
-  const [isFavorite, setIsFavorite] = useState(false);
+  const [scheduledSlot, setScheduledSlot] = useState<string | null>(null);
+  const router = useRouter();
+  const { showToast } = useToast();
+  const { authUser, isLoading } = useAuthUser();
+  const { hydrated, favoriteMeals, addFavoriteMeal, removeFavoriteMeal, addActiveMeal } = useKostMealStore();
+  const favoriteEntry = favoriteMeals.find((meal) => meal.id === quinoaBowl.id);
+  const isFavorite = Boolean(favoriteEntry);
+  const isAddedToSelectedSlot = Boolean(selectedSlot && scheduledSlot === selectedSlot);
+
+  const requireAccount = () => {
+    if (isLoading || !hydrated) {
+      showToast("Menyiapkan data akun...", "info");
+      return false;
+    }
+    if (authUser) return true;
+
+    showToast("Masuk dulu untuk menyimpan menu ke akunmu.", "info");
+    router.push("/login?next=/");
+    return false;
+  };
+
+  const handleFavorite = () => {
+    if (!requireAccount()) return;
+
+    if (favoriteEntry) {
+      removeFavoriteMeal(favoriteEntry.id);
+      showToast("Menu dihapus dari favorit.");
+      return;
+    }
+
+    addFavoriteMeal(quinoaBowl);
+    showToast("Super Quinoa Bowl disimpan ke favorit.");
+  };
+
+  const handleAddToSchedule = () => {
+    if (!selectedSlot || !requireAccount()) return;
+
+    addActiveMeal({ ...quinoaBowl, id: `${quinoaBowl.id}-${selectedSlot}`, mealType: selectedSlot, tags: [selectedSlot, "High Protein"] });
+    setScheduledSlot(selectedSlot);
+    showToast(`Super Quinoa Bowl ditambahkan ke ${selectedSlot.toLowerCase()}.`);
+  };
 
   return (
     <Card className="mx-auto w-full max-w-md overflow-hidden">
@@ -28,7 +85,7 @@ export function ScheduleMealCard() {
           </div>
           <button
             type="button"
-            onClick={() => setIsFavorite((current) => !current)}
+            onClick={handleFavorite}
             className="focus-soft grid h-10 w-10 shrink-0 place-items-center rounded-full text-text-primary transition hover:bg-soft-green hover:text-primary"
             aria-label={isFavorite ? "Hapus dari favorit" : "Tambah ke favorit"}
           >
@@ -70,10 +127,11 @@ export function ScheduleMealCard() {
         <Button
           variant={selectedSlot ? "primary" : "orange"}
           className="mt-4 w-full"
-          leftIcon={selectedSlot ? <Check className="h-4 w-4" /> : <CalendarPlus className="h-4 w-4" />}
-          disabled={!selectedSlot}
+          leftIcon={isAddedToSelectedSlot ? <Check className="h-4 w-4" /> : <CalendarPlus className="h-4 w-4" />}
+          disabled={!selectedSlot || isAddedToSelectedSlot}
+          onClick={handleAddToSchedule}
         >
-          {selectedSlot ? `Ditambahkan ke ${selectedSlot}` : "Pilih Jadwal Makan"}
+          {isAddedToSelectedSlot ? `Sudah ditambahkan ke ${selectedSlot}` : selectedSlot ? `Tambahkan ke ${selectedSlot}` : "Pilih Waktu Makan"}
         </Button>
       </div>
     </Card>

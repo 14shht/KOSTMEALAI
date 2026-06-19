@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
@@ -16,6 +16,7 @@ import { cookingTools, generateGoals, tastePrefs } from "@/lib/mock-data";
 import { saveGeneratedMealPlan } from "@/lib/hooks/use-generated-meal-plan";
 import { createMockMealPlan } from "@/lib/mock-ai-meal-plan";
 import { useKostMealStore } from "@/lib/store/use-kostmeal-store";
+import { readStorage, removeStorage, writeStorage } from "@/lib/storage";
 import type { MealPlanRequest } from "@/lib/types/meal-plan";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/components/feedback/ToastProvider";
@@ -46,6 +47,23 @@ const stepProgressWidth = {
   2: "50%",
   3: "100%",
 } as const;
+
+const mealPlanDraftKey = "kostmeal.generateMealPlan.draft";
+
+type MealPlanDraft = {
+  weeklyBudget: string;
+  durationDays: number;
+  nutritionGoal: MealPlanRequest["nutritionGoal"];
+  selectedTools: string[];
+  availableIngredients: string;
+  foodPreferences: string[];
+  avoidedFoods: string;
+  allergies: string;
+  mealsPerDay: number;
+  location: string;
+  notes: string;
+  generationStep: 1 | 2;
+};
 
 function splitList(value: string) {
   return value
@@ -85,6 +103,54 @@ export function GenerateMealPlanForm() {
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [generationStep, setGenerationStep] = useState<1 | 2 | 3>(1);
+  const [draftRestored, setDraftRestored] = useState(false);
+  const shouldPersistDraft = useRef(true);
+
+  useEffect(() => {
+    const frameId = window.requestAnimationFrame(() => {
+      const draft = readStorage<Partial<MealPlanDraft> | null>(mealPlanDraftKey, null);
+
+      if (draft) {
+        if (typeof draft.weeklyBudget === "string") setWeeklyBudget(draft.weeklyBudget);
+        if (durationOptions.some((option) => option.value === draft.durationDays)) setDurationDays(draft.durationDays!);
+        if (goalOptions.some((option) => option.value === draft.nutritionGoal)) setNutritionGoal(draft.nutritionGoal!);
+        if (Array.isArray(draft.selectedTools)) setSelectedTools(draft.selectedTools.filter((tool) => typeof tool === "string"));
+        if (typeof draft.availableIngredients === "string") setAvailableIngredients(draft.availableIngredients);
+        if (Array.isArray(draft.foodPreferences)) setFoodPreferences(draft.foodPreferences.filter((preference) => typeof preference === "string"));
+        if (typeof draft.avoidedFoods === "string") setAvoidedFoods(draft.avoidedFoods);
+        if (typeof draft.allergies === "string") setAllergies(draft.allergies);
+        if ([2, 3, 4].includes(draft.mealsPerDay ?? 0)) setMealsPerDay(draft.mealsPerDay!);
+        if (typeof draft.location === "string") setLocation(draft.location);
+        if (typeof draft.notes === "string") setNotes(draft.notes);
+        if (draft.generationStep === 2) setGenerationStep(2);
+      }
+
+      setDraftRestored(true);
+    });
+
+    return () => window.cancelAnimationFrame(frameId);
+  }, []);
+
+  useEffect(() => {
+    if (!draftRestored || !shouldPersistDraft.current) return;
+
+    const draft: MealPlanDraft = {
+      weeklyBudget,
+      durationDays,
+      nutritionGoal,
+      selectedTools,
+      availableIngredients,
+      foodPreferences,
+      avoidedFoods,
+      allergies,
+      mealsPerDay,
+      location,
+      notes,
+      generationStep: generationStep === 2 ? 2 : 1,
+    };
+
+    writeStorage(mealPlanDraftKey, draft);
+  }, [allergies, availableIngredients, avoidedFoods, draftRestored, durationDays, foodPreferences, generationStep, location, mealsPerDay, notes, nutritionGoal, selectedTools, weeklyBudget]);
 
   const isFormValid = Number(weeklyBudget) >= 50000 && selectedTools.length > 0 && durationDays > 0;
   const selectedGoalLabel = goalOptions.find((goal) => goal.value === nutritionGoal)?.label ?? "High Protein";
@@ -153,6 +219,8 @@ export function GenerateMealPlanForm() {
       const apiResult = parsedResult.data;
       saveGeneratedMealPlan(apiResult.data);
       saveActiveMealPlan(apiResult.data);
+      shouldPersistDraft.current = false;
+      removeStorage(mealPlanDraftKey);
       setGenerationStep(3);
       showToast("Meal plan berhasil dibuat.");
       window.setTimeout(() => router.push("/meal-plan-result"), 520);
@@ -160,6 +228,8 @@ export function GenerateMealPlanForm() {
       const fallbackPlan = createMockMealPlan(mealPlanPayload);
       saveGeneratedMealPlan(fallbackPlan);
       saveActiveMealPlan(fallbackPlan);
+      shouldPersistDraft.current = false;
+      removeStorage(mealPlanDraftKey);
       setGenerationStep(3);
       showToast("Meal plan berhasil dibuat.");
       window.setTimeout(() => router.push("/meal-plan-result"), 520);

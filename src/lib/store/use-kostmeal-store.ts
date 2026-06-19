@@ -38,6 +38,11 @@ function createId(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+function getAccountStorageKey(key: string) {
+  const email = getAuthUser()?.email.trim().toLowerCase();
+  return `${key}.${encodeURIComponent(email || "guest")}`;
+}
+
 function goalLabel(goal: GeneratedMealPlan["summary"]["goal"]) {
   const labels = {
     "hemat-kalori": "Hemat Kalori",
@@ -137,7 +142,7 @@ function getInitialPlan() {
 }
 
 function getInitialFavorites(): StoredMeal[] {
-  const stored = readStorage<StoredMeal[] | null>(favoriteMealsKey, null);
+  const stored = readStorage<StoredMeal[] | null>(getAccountStorageKey(favoriteMealsKey), null);
   if (stored) return stored;
 
   return mockFavorites.map((favorite, index) => ({
@@ -190,7 +195,7 @@ export function useKostMealStore() {
       setCompletedMealIds(
         storedCompletedMealIds ?? (initialPlan ? [] : todayMeals.flatMap((meal, index) => (meal.ready ? [`mock-${index}`] : []))),
       );
-      setActiveExtraMeals(readStorage<StoredMeal[]>(activeExtraMealsKey, []));
+      setActiveExtraMeals(readStorage<StoredMeal[]>(getAccountStorageKey(activeExtraMealsKey), []));
       setHydrated(true);
     });
 
@@ -201,12 +206,12 @@ export function useKostMealStore() {
     if (!hydrated) return;
     writeStorage(activePlanKey, activeMealPlan);
     writeStorage(legacyGeneratedPlanKey, activeMealPlan);
-    writeStorage(favoriteMealsKey, favoriteMeals);
+    writeStorage(getAccountStorageKey(favoriteMealsKey), favoriteMeals);
     writeStorage(shoppingListKey, shoppingList);
     writeStorage(mealHistoryKey, mealHistory);
     writeStorage(profilePreferencesKey, profile);
     writeStorage(completedMealIdsKey, completedMealIds);
-    writeStorage(activeExtraMealsKey, activeExtraMeals);
+    writeStorage(getAccountStorageKey(activeExtraMealsKey), activeExtraMeals);
   }, [activeExtraMeals, activeMealPlan, completedMealIds, favoriteMeals, hydrated, mealHistory, profile, shoppingList]);
 
   const todayMealList = useMemo(
@@ -293,7 +298,8 @@ export function useKostMealStore() {
   }, []);
 
   const addActiveMeal = useCallback((meal: StoredMeal) => {
-    setActiveExtraMeals((current) => [{ ...meal, id: meal.id || createId("active") }, ...current]);
+    const nextMeal = { ...meal, id: meal.id || createId("active") };
+    setActiveExtraMeals((current) => current.some((item) => item.id === nextMeal.id) ? current : [nextMeal, ...current]);
   }, []);
 
   const toggleShoppingItem = useCallback((itemId: string) => {
