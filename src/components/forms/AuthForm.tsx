@@ -155,7 +155,7 @@ function GoogleSignInButton({
     <Button
       type="button"
       variant="outline"
-      className="h-12 w-full justify-start border-[#dadce0] bg-white px-4 text-[#202124] shadow-[0_1px_2px_rgba(60,64,67,0.18)] hover:border-[#c4c7c5] hover:bg-[#f8fafd] hover:shadow-[0_1px_3px_rgba(60,64,67,0.28)]"
+      className="h-12 w-full justify-center border-[#dadce0] bg-white px-4 text-[#202124] shadow-[0_1px_2px_rgba(60,64,67,0.18)] hover:border-[#c4c7c5] hover:bg-[#f8fafd] hover:shadow-[0_1px_3px_rgba(60,64,67,0.28)]"
       loading={loading}
       leftIcon={<GoogleMark />}
       onClick={onClick}
