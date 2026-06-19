@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/feedback/ToastProvider";
 import { createAuthUserFromSupabaseUser, getAuthUser, saveAuthUser } from "@/lib/auth";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
-import { writeStorage } from "@/lib/storage";
+import { readStorage, writeStorage } from "@/lib/storage";
 import type { ProfilePreferences } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -167,6 +167,7 @@ export function ProfileSetupFlow() {
     schedule: "",
     goal: "",
   });
+  const [isCheckingSetup, setIsCheckingSetup] = useState(true);
   const safeCurrentStep = Math.min(Math.max(currentStep, 0), steps.length - 1);
   const step = steps[safeCurrentStep];
 
@@ -174,7 +175,7 @@ export function ProfileSetupFlow() {
     const supabase = createSupabaseBrowserClient();
     let active = true;
 
-    supabase.auth.getUser().then(({ data }) => {
+    supabase.auth.getUser().then(async ({ data }) => {
       if (!active) return;
       if (!data.user) {
         router.replace("/login");
@@ -182,6 +183,25 @@ export function ProfileSetupFlow() {
       }
 
       saveAuthUser(createAuthUserFromSupabaseUser(data.user));
+      const setupCompletedInAccount = data.user.user_metadata?.profileSetupCompleted === true;
+      const setupCompletedLocally = data.user.email
+        ? readStorage<boolean>(`kostmeal.profileSetup.completed.${data.user.email}`, false)
+        : false;
+
+      if (setupCompletedInAccount || setupCompletedLocally) {
+        if (!setupCompletedInAccount) {
+          await supabase.auth.updateUser({
+            data: {
+              profileSetupCompleted: true,
+              profileSetupCompletedAt: new Date().toISOString(),
+            },
+          });
+        }
+        if (active) router.replace("/dashboard");
+        return;
+      }
+
+      setIsCheckingSetup(false);
     });
 
     return () => {
@@ -218,8 +238,9 @@ export function ProfileSetupFlow() {
     ].filter(Boolean);
   }
 
-  function saveSetupData() {
+  async function saveSetupData() {
     const authUser = getAuthUser();
+    const completedAt = new Date().toISOString();
     const profilePreferences: ProfilePreferences = {
       fullName: authUser?.displayName ?? "User",
       email: authUser?.email ?? "user@example.com",
@@ -233,19 +254,35 @@ export function ProfileSetupFlow() {
     writeStorage("kostmeal.profilePreferences", profilePreferences);
     writeStorage("kostmeal.profileSetup", {
       ...data,
-      completedAt: new Date().toISOString(),
+      completedAt,
     });
     writeStorage("kostmeal.profileSetup.completed", true);
     if (authUser?.email) {
       writeStorage(`kostmeal.profileSetup.completed.${authUser.email}`, true);
     }
+
+    const supabase = createSupabaseBrowserClient();
+    const { error } = await supabase.auth.updateUser({
+      data: {
+        profileSetupCompleted: true,
+        profileSetupCompletedAt: completedAt,
+      },
+    });
+
+    if (error) {
+      showToast("Status setup belum tersimpan ke akun. Coba lagi.", "error");
+      return false;
+    }
+
     showToast("Preferensi awal berhasil disimpan.");
+    return true;
   }
 
-  function goNext() {
+  async function goNext() {
     if (!canContinue) return;
     if (safeCurrentStep === steps.length - 1) {
-      saveSetupData();
+      const saved = await saveSetupData();
+      if (!saved) return;
       router.push("/dashboard");
       return;
     }
@@ -259,6 +296,8 @@ export function ProfileSetupFlow() {
     }
     setCurrentStep((stepIndex) => Math.max(stepIndex - 1, 0));
   }
+
+  if (isCheckingSetup) return null;
 
   return (
     <div className="relative flex h-dvh max-h-dvh w-full overflow-hidden bg-[#fbfffc] px-5 py-7 text-[#121827]">

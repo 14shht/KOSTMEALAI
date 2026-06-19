@@ -7,8 +7,8 @@ import { CountUpText } from "@/components/landing/CountUpText";
 import { useToast } from "@/components/feedback/ToastProvider";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { useAuthUser } from "@/lib/hooks/use-auth-user";
 import { useKostMealStore } from "@/lib/store/use-kostmeal-store";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { StoredMeal } from "@/lib/types";
 
 const scheduleSlots = ["Sarapan", "Makan Siang", "Makan Malam"];
@@ -30,26 +30,28 @@ export function ScheduleMealCard() {
   const [scheduledSlot, setScheduledSlot] = useState<string | null>(null);
   const router = useRouter();
   const { showToast } = useToast();
-  const { authUser, isLoading } = useAuthUser();
   const { hydrated, favoriteMeals, addFavoriteMeal, removeFavoriteMeal, addActiveMeal } = useKostMealStore();
   const favoriteEntry = favoriteMeals.find((meal) => meal.id === quinoaBowl.id);
   const isFavorite = Boolean(favoriteEntry);
   const isAddedToSelectedSlot = Boolean(selectedSlot && scheduledSlot === selectedSlot);
 
-  const requireAccount = () => {
-    if (isLoading || !hydrated) {
+  const requireAccount = async () => {
+    if (!hydrated) {
       showToast("Menyiapkan data akun...", "info");
       return false;
     }
-    if (authUser) return true;
+
+    const supabase = createSupabaseBrowserClient();
+    const { data } = await supabase.auth.getUser();
+    if (data.user) return true;
 
     showToast("Masuk dulu untuk menyimpan menu ke akunmu.", "info");
     router.push("/login?next=/");
     return false;
   };
 
-  const handleFavorite = () => {
-    if (!requireAccount()) return;
+  const handleFavorite = async () => {
+    if (!await requireAccount()) return;
 
     if (favoriteEntry) {
       removeFavoriteMeal(favoriteEntry.id);
@@ -61,8 +63,8 @@ export function ScheduleMealCard() {
     showToast("Super Quinoa Bowl disimpan ke favorit.");
   };
 
-  const handleAddToSchedule = () => {
-    if (!selectedSlot || !requireAccount()) return;
+  const handleAddToSchedule = async () => {
+    if (!selectedSlot || !await requireAccount()) return;
 
     addActiveMeal({ ...quinoaBowl, id: `${quinoaBowl.id}-${selectedSlot}`, mealType: selectedSlot, tags: [selectedSlot, "High Protein"] });
     setScheduledSlot(selectedSlot);
