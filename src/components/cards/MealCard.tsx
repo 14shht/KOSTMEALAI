@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/Card";
 import { cn } from "@/lib/utils";
 
 type MealCardProps = {
+  id?: string;
   title: string;
   mealType?: string;
   time?: string;
@@ -13,9 +14,11 @@ type MealCardProps = {
   image: string;
   ready?: boolean;
   locked?: boolean;
+  onOpen?: () => void;
+  onToggleReady?: () => void;
 };
 
-export function MealCard({ title, mealType, time, price, calories, protein, image, ready, locked }: MealCardProps) {
+export function MealCard({ title, mealType, time, price, calories, protein, image, ready, locked, onOpen, onToggleReady }: MealCardProps) {
   const imageStyle = image.startsWith("/") ? { backgroundImage: `url(${image})` } : undefined;
   return (
     <Card className="overflow-hidden">
@@ -28,7 +31,9 @@ export function MealCard({ title, mealType, time, price, calories, protein, imag
         ) : null}
       </div>
       <div className="p-5">
+        <button type="button" onClick={onOpen} className="block w-full text-left">
         <h3 className="text-2xl font-bold leading-tight text-text-primary">{title}</h3>
+        </button>
         {locked ? (
           <p className="mt-7 text-sm italic text-text-secondary">Menu akan terbuka pukul 17:00</p>
         ) : (
@@ -42,12 +47,20 @@ export function MealCard({ title, mealType, time, price, calories, protein, imag
                 <span><b className="block text-xs">CAL</b>{calories}</span>
                 <span><b className="block text-xs">PROT</b>{protein}</span>
               </div>
-              <div className={cn(
+              <button
+                type="button"
+                aria-label={ready ? `Tandai ${title} belum selesai` : `Tandai ${title} selesai`}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onToggleReady?.();
+                }}
+                className={cn(
                 "flex h-8 w-8 items-center justify-center rounded-full border transition duration-300",
                 ready ? "border-primary bg-primary text-white" : "border-primary bg-white text-primary",
-              )}>
+                )}
+              >
                 {ready ? <Check className="h-5 w-5" /> : <Timer className="h-5 w-5 text-primary" />}
-              </div>
+              </button>
             </div>
           </>
         )}

@@ -5,20 +5,24 @@ import { Card } from "@/components/ui/Card";
 import { cn } from "@/lib/utils";
 
 type FavoriteMealCardProps = {
+  id?: string;
   title: string;
   image: string;
   tags: string[];
   kcal: number;
   price: string;
   time: string;
+  onRemove?: () => void;
+  onDetail?: () => void;
+  onUseAgain?: () => void;
 };
 
-export function FavoriteMealCard({ title, image, tags, kcal, price, time }: FavoriteMealCardProps) {
+export function FavoriteMealCard({ title, image, tags, kcal, price, time, onRemove, onDetail, onUseAgain }: FavoriteMealCardProps) {
   const imageStyle = image.startsWith("/") ? { backgroundImage: `url(${image})` } : undefined;
   return (
     <Card className="overflow-hidden">
       <div className={cn("relative h-56 bg-cover bg-center", !imageStyle && image)} style={imageStyle}>
-        <button aria-label={`Hapus ${title} dari favorit`} className="absolute right-4 top-4 rounded-full bg-white p-3 text-red-600 shadow-card">
+        <button type="button" onClick={onRemove} aria-label={`Hapus ${title} dari favorit`} className="absolute right-4 top-4 rounded-full bg-white p-3 text-red-600 shadow-card">
           <Heart className="h-5 w-5 fill-current" />
         </button>
         <div className="absolute bottom-4 left-4 flex gap-2">
@@ -35,9 +39,9 @@ export function FavoriteMealCard({ title, image, tags, kcal, price, time }: Favo
           <span className="flex items-center gap-1"><Timer className="h-4 w-4" />{time}</span>
         </div>
         <div className="mt-5 flex items-center gap-2">
-          <Button variant="secondary" size="sm" className="flex-1">Detail</Button>
-          <Button variant="orange" size="sm" className="flex-1">Pakai Lagi</Button>
-          <button aria-label={`Hapus ${title}`} className="focus-soft rounded-full bg-danger/15 p-3 text-danger">
+          <Button type="button" variant="secondary" size="sm" className="flex-1" onClick={onDetail}>Detail</Button>
+          <Button type="button" variant="orange" size="sm" className="flex-1" onClick={onUseAgain}>Pakai Lagi</Button>
+          <button type="button" onClick={onRemove} aria-label={`Hapus ${title}`} className="focus-soft rounded-full bg-danger/15 p-3 text-danger">
             <Trash2 className="h-4 w-4" />
           </button>
         </div>

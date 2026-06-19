@@ -11,16 +11,23 @@ const fallbackUser: AuthUser = {
   membership: "Akun KostMeal",
 };
 
+export const authUserChangedEvent = "kostmeal.auth.changed";
+
 export function useAuthUser() {
   const router = useRouter();
   const [authUser, setAuthUser] = useState<AuthUser>(fallbackUser);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => {
+    const syncUser = () => {
       setAuthUser(getAuthUser() ?? fallbackUser);
-    }, 0);
+    };
+    const timer = window.setTimeout(syncUser, 0);
+    window.addEventListener(authUserChangedEvent, syncUser);
 
-    return () => window.clearTimeout(timer);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener(authUserChangedEvent, syncUser);
+    };
   }, []);
 
   function setUser(input: AuthUser | { email: string; fullName?: string }) {
@@ -28,6 +35,7 @@ export function useAuthUser() {
 
     saveAuthUser(nextUser);
     setAuthUser(nextUser);
+    window.dispatchEvent(new Event(authUserChangedEvent));
   }
 
   function logout() {

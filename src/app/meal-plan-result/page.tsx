@@ -1,21 +1,41 @@
 "use client";
 
 import Link from "next/link";
+import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { AlertTriangle, Download, Heart, Share2, ShoppingCart, Sparkles, Zap } from "lucide-react";
+import { useToast } from "@/components/feedback/ToastProvider";
 import { AppShell } from "@/components/layout/AppShell";
+import { ShareModal } from "@/components/modals/ShareModal";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { SectionHeader } from "@/components/ui/SectionHeader";
-import { useGeneratedMealPlan } from "@/lib/hooks/use-generated-meal-plan";
+import { foodImages } from "@/lib/constants";
+import { useKostMealStore } from "@/lib/store/use-kostmeal-store";
 import { formatRupiah } from "@/lib/utils";
 
 export default function MealPlanResultPage() {
-  const { plan, loading } = useGeneratedMealPlan();
+  const router = useRouter();
+  const { showToast } = useToast();
+  const { activeMealPlan: plan, hydrated, addFavoriteMeal, shoppingList, toggleShoppingItem } = useKostMealStore();
+  const [shareOpen, setShareOpen] = useState(false);
 
-  if (loading) {
+  const groupedShoppingList = useMemo(() => (
+    shoppingList.reduce<Record<string, typeof shoppingList>>((groups, item) => {
+      groups[item.category] = [...(groups[item.category] ?? []), item];
+      return groups;
+    }, {})
+  ), [shoppingList]);
+
+  const shareText = useMemo(() => {
+    if (!plan) return "";
+    return `${plan.title}\nBudget: ${formatRupiah(plan.summary.weeklyBudget)}\nEstimasi biaya: ${formatRupiah(plan.summary.estimatedTotalCost)}\nRata-rata kalori: ${plan.summary.averageCaloriesPerDay} kkal/hari`;
+  }, [plan]);
+
+  if (!hydrated) {
     return (
       <AppShell>
         <Card className="mx-auto max-w-xl border-primary/20 bg-primary/5 p-8 text-center" hover={false}>
@@ -35,9 +55,7 @@ export default function MealPlanResultPage() {
           <p className="mt-4 text-text-secondary">
             Isi preferensi kamu dulu agar KostMeal AI bisa membuat menu yang sesuai.
           </p>
-          <p className="mt-3 text-sm text-text-secondary">
-            Estimasi kalori dan harga bersifat perkiraan.
-          </p>
+          <p className="mt-3 text-sm text-text-secondary">Estimasi kalori dan harga bersifat perkiraan.</p>
           <Link href="/generate-plan">
             <Button className="mt-6" rightIcon={<Sparkles className="h-5 w-5" />}>Buat Meal Plan</Button>
           </Link>
@@ -46,8 +64,28 @@ export default function MealPlanResultPage() {
     );
   }
 
-  const totalShoppingItems = plan.shoppingList.reduce((total, category) => total + category.items.length, 0);
+  const totalShoppingItems = shoppingList.length || plan.shoppingList.reduce((total, category) => total + category.items.length, 0);
   const budgetUsage = Math.min((plan.summary.estimatedTotalCost / plan.summary.weeklyBudget) * 100, 100);
+
+  const saveMealsToFavorite = () => {
+    plan.days[0]?.meals.forEach((meal, index) => {
+      addFavoriteMeal({
+        id: `favorite-${meal.type}-${meal.name}`,
+        title: meal.name,
+        mealType: meal.type,
+        time: `${meal.prepTimeMinutes} Menit`,
+        price: formatRupiah(meal.estimatedCost),
+        calories: meal.estimatedCalories,
+        protein: `${meal.estimatedProtein}g`,
+        image: [foodImages.nasiGoreng, foodImages.ayamSayur, foodImages.smoothie][index % 3],
+        tags: [meal.type, plan.summary.goal],
+        description: meal.description,
+        ingredients: meal.ingredients.map((ingredient) => `${ingredient.name} (${ingredient.quantity})`),
+        steps: meal.steps,
+      });
+    });
+    showToast("Menu berhasil disimpan ke favorit.");
+  };
 
   return (
     <AppShell>
@@ -56,8 +94,8 @@ export default function MealPlanResultPage() {
         subtitle={plan.summary.notes}
         action={
           <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
-            <Button variant="outline" className="w-full sm:w-auto" leftIcon={<Share2 className="h-4 w-4" />}>Bagikan</Button>
-            <Button variant="orange" className="w-full sm:w-auto" leftIcon={<Download className="h-4 w-4" />}>Ekspor PDF</Button>
+            <Button type="button" variant="outline" className="w-full sm:w-auto" leftIcon={<Share2 className="h-4 w-4" />} onClick={() => setShareOpen(true)}>Bagikan</Button>
+            <Button type="button" variant="orange" className="w-full sm:w-auto" leftIcon={<Download className="h-4 w-4" />} onClick={() => showToast("Fitur ekspor PDF akan segera tersedia.", "info")}>Ekspor PDF</Button>
           </div>
         }
       />
@@ -90,11 +128,11 @@ export default function MealPlanResultPage() {
                     <p className="mt-1 text-sm text-text-secondary">{meal.description}</p>
                     <p className="mt-2 flex flex-wrap gap-x-2 gap-y-1 text-xs text-text-secondary">
                       <span>{meal.estimatedCalories} kkal</span>
-                      <span>&bull;</span>
+                      <span>-</span>
                       <span>{meal.estimatedProtein}g protein</span>
-                      <span>&bull;</span>
+                      <span>-</span>
                       <span>{formatRupiah(meal.estimatedCost)}</span>
-                      <span>&bull;</span>
+                      <span>-</span>
                       <span>{meal.prepTimeMinutes} menit</span>
                     </p>
                     <details className="mt-3 rounded-xl bg-soft-green p-3 text-sm">
@@ -125,10 +163,8 @@ export default function MealPlanResultPage() {
                 </p>
               </div>
               <div className="flex flex-col gap-4 sm:flex-row">
-                <Button variant="secondary" className="w-full sm:w-auto" leftIcon={<Heart className="h-5 w-5" />}>Simpan ke Favorit</Button>
-                <Link href="/generate-plan" className="w-full sm:w-auto">
-                  <Button className="w-full sm:w-auto" rightIcon={<Sparkles className="h-5 w-5" />}>Generate Ulang</Button>
-                </Link>
+                <Button type="button" variant="secondary" className="w-full sm:w-auto" leftIcon={<Heart className="h-5 w-5" />} onClick={saveMealsToFavorite}>Simpan ke Favorit</Button>
+                <Button type="button" className="w-full sm:w-auto" rightIcon={<Sparkles className="h-5 w-5" />} onClick={() => router.push("/generate-plan")}>Generate Ulang</Button>
               </div>
             </div>
             <div className="mt-8 grid gap-5 sm:grid-cols-3">
@@ -197,19 +233,19 @@ export default function MealPlanResultPage() {
               <p className="text-text-secondary">Total {totalShoppingItems} item perlu dibeli</p>
             </div>
             <div className="space-y-6 p-6 sm:p-8">
-              {plan.shoppingList.map((category) => (
-                <div key={category.category}>
-                  <h3 className="mb-3 text-sm font-bold uppercase text-primary">{category.category}</h3>
+              {Object.entries(groupedShoppingList).map(([category, items]) => (
+                <div key={category}>
+                  <h3 className="mb-3 text-sm font-bold uppercase text-primary">{category}</h3>
                   <div className="space-y-3">
-                    {category.items.map((item) => (
+                    {items.map((item) => (
                       <Checkbox
-                        key={`${category.category}-${item.name}`}
+                        key={item.id}
+                        checked={item.checked}
+                        onChange={() => toggleShoppingItem(item.id)}
                         label={(
-                          <span>
+                          <span className={item.checked ? "text-text-secondary line-through" : ""}>
                             <span className="block">{item.name} ({item.quantity})</span>
-                            <span className="text-xs text-text-secondary">
-                              {formatRupiah(item.estimatedPrice)}{item.isOptional ? " • opsional" : ""}
-                            </span>
+                            <span className="text-xs text-text-secondary">{formatRupiah(item.estimatedPrice)}</span>
                           </span>
                         )}
                       />
@@ -217,11 +253,14 @@ export default function MealPlanResultPage() {
                   </div>
                 </div>
               ))}
-              <Button variant="orange" className="mt-10 w-full" leftIcon={<ShoppingCart className="h-5 w-5" />}>Lihat Daftar Belanja</Button>
+              <Link href="/shopping-list">
+                <Button variant="orange" className="mt-10 w-full" leftIcon={<ShoppingCart className="h-5 w-5" />}>Lihat Daftar Belanja</Button>
+              </Link>
             </div>
           </Card>
         </aside>
       </div>
+      <ShareModal open={shareOpen} text={shareText} onClose={() => setShareOpen(false)} onCopied={() => showToast("Link berhasil disalin.")} />
     </AppShell>
   );
 }

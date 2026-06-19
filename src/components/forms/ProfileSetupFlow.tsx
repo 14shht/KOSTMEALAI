@@ -6,6 +6,10 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, Banknote, ChefHat, Clock3, Home, Snowflake, Target } from "lucide-react";
 import type { Variants } from "framer-motion";
 import { Button } from "@/components/ui/Button";
+import { useToast } from "@/components/feedback/ToastProvider";
+import { getAuthUser } from "@/lib/auth";
+import { writeStorage } from "@/lib/storage";
+import type { ProfilePreferences } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 type SetupData = {
@@ -153,6 +157,7 @@ function ChoiceButton({
 
 export function ProfileSetupFlow() {
   const router = useRouter();
+  const { showToast } = useToast();
   const [currentStep, setCurrentStep] = useState(0);
   const [data, setData] = useState<SetupData>({
     budget: "",
@@ -176,9 +181,51 @@ export function ProfileSetupFlow() {
     setData((current) => ({ ...current, [key]: value }));
   }
 
+  function getCookingToolsFromSetup(value: string) {
+    if (value.includes("Rice cooker")) return ["Rice Cooker"];
+    if (value.includes("Kompor")) return ["Rice Cooker", "Kompor Gas"];
+    if (value.includes("Microwave")) return ["Microwave", "Air Fryer"];
+    return [];
+  }
+
+  function getPreferencesFromSetup() {
+    return [
+      data.goal.includes("protein") ? "High Protein" : "",
+      data.goal.includes("hemat") ? "Hemat Budget" : "",
+      data.goal.includes("sehat") ? "Sehat Praktis" : "",
+      data.schedule.includes("cepat") ? "Cepat Saji (<15mnt)" : "",
+      data.schedule.includes("akhir pekan") ? "Meal Prep" : "",
+    ].filter(Boolean);
+  }
+
+  function saveSetupData() {
+    const authUser = getAuthUser();
+    const profilePreferences: ProfilePreferences = {
+      fullName: authUser?.displayName ?? "User",
+      email: authUser?.email ?? "user@example.com",
+      job: "Mahasiswa",
+      location: "Jakarta Selatan",
+      preferences: getPreferencesFromSetup(),
+      cookingTools: getCookingToolsFromSetup(data.cookingTool),
+      allergies: [],
+    };
+
+    writeStorage("kostmeal.profilePreferences", profilePreferences);
+    writeStorage("kostmeal.profileSetup", {
+      ...data,
+      completedAt: new Date().toISOString(),
+    });
+    writeStorage("kostmeal.profileSetup.completed", true);
+    if (authUser?.email) {
+      writeStorage(`kostmeal.profileSetup.completed.${authUser.email}`, true);
+    }
+    showToast("Preferensi awal berhasil disimpan.");
+  }
+
   function goNext() {
     if (!canContinue) return;
     if (safeCurrentStep === steps.length - 1) {
+      saveSetupData();
       router.push("/dashboard");
       return;
     }

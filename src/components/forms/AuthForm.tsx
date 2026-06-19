@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AnimatePresence, motion } from "framer-motion";
@@ -12,6 +12,39 @@ import { BrandLogo } from "@/components/layout/BrandLogo";
 import { Button } from "@/components/ui/Button";
 import { createAuthUser, saveAuthUser } from "@/lib/auth";
 import { cn } from "@/lib/utils";
+
+type GoogleCredentialResponse = {
+  credential?: string;
+};
+
+type GoogleButtonConfig = {
+  type: "standard";
+  theme: "outline";
+  size: "large";
+  shape: "pill";
+  text: "signin_with" | "signup_with";
+  width: number;
+  logo_alignment: "center" | "left";
+};
+
+type GoogleIdApi = {
+  initialize: (config: {
+    client_id: string;
+    callback: (response: GoogleCredentialResponse) => void;
+    ux_mode?: "popup" | "redirect";
+  }) => void;
+  renderButton: (parent: HTMLElement, options: GoogleButtonConfig) => void;
+};
+
+declare global {
+  interface Window {
+    google?: {
+      accounts: {
+        id: GoogleIdApi;
+      };
+    };
+  }
+}
 
 const loginSchema = z.object({
   email: z.email("Email tidak valid"),
@@ -34,6 +67,11 @@ const registerSchema = z
 
 type AuthMode = "login" | "register";
 type AuthValues = z.infer<typeof loginSchema> & Partial<z.infer<typeof registerSchema>>;
+type RegisteredAccount = {
+  email: string;
+  fullName: string;
+  createdAt: string;
+};
 
 const copy = {
   login: {
@@ -126,12 +164,118 @@ function AuthField({ error, icon, inputProps }: AuthFieldProps) {
   );
 }
 
-function GoogleMark() {
-  return (
-    <span className="grid h-5 w-5 place-items-center rounded-full text-base font-black text-[#4285f4]">
-      G
-    </span>
-  );
+function getRegisteredAccountKey(email: string) {
+  return `kostmeal.registeredAccount.${email.trim().toLowerCase()}`;
+}
+
+function saveRegisteredAccount(account: RegisteredAccount) {
+  window.localStorage.setItem(getRegisteredAccountKey(account.email), JSON.stringify(account));
+}
+
+function getRegisteredAccount(email: string): RegisteredAccount | null {
+  try {
+    const rawAccount = window.localStorage.getItem(getRegisteredAccountKey(email));
+    return rawAccount ? (JSON.parse(rawAccount) as RegisteredAccount) : null;
+  } catch {
+    return null;
+  }
+}
+
+function getSetupCompleted(email: string) {
+  const normalizedEmail = email.trim().toLowerCase();
+  return window.localStorage.getItem(`kostmeal.profileSetup.completed.${normalizedEmail}`) === "true"
+    || window.localStorage.getItem("kostmeal.profileSetup.completed") === "true";
+}
+
+function decodeGoogleCredential(credential: string) {
+  const payload = credential.split(".")[1];
+  if (!payload) return null;
+
+  try {
+    const normalizedPayload = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const decodedPayload = decodeURIComponent(
+      window
+        .atob(normalizedPayload)
+        .split("")
+        .map((char) => `%${`00${char.charCodeAt(0).toString(16)}`.slice(-2)}`)
+        .join(""),
+    );
+    const parsedPayload = JSON.parse(decodedPayload) as { email?: string; name?: string };
+    if (!parsedPayload.email) return null;
+    return {
+      email: parsedPayload.email,
+      fullName: parsedPayload.name ?? parsedPayload.email.split("@")[0],
+    };
+  } catch {
+    return null;
+  }
+}
+
+function GoogleSignInButton({
+  mode,
+  onSuccess,
+}: {
+  mode: AuthMode;
+  onSuccess: (profile: { email: string; fullName: string }) => void;
+}) {
+  const buttonRef = useRef<HTMLDivElement>(null);
+  const [scriptReady, setScriptReady] = useState(false);
+  const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+
+  useEffect(() => {
+    if (!clientId) return;
+    if (window.google?.accounts.id) {
+      const frameId = window.requestAnimationFrame(() => setScriptReady(true));
+      return () => window.cancelAnimationFrame(frameId);
+    }
+
+    const existingScript = document.querySelector<HTMLScriptElement>("script[src='https://accounts.google.com/gsi/client']");
+    if (existingScript) {
+      existingScript.addEventListener("load", () => setScriptReady(true), { once: true });
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src = "https://accounts.google.com/gsi/client";
+    script.async = true;
+    script.defer = true;
+    script.onload = () => setScriptReady(true);
+    document.head.appendChild(script);
+  }, [clientId]);
+
+  useEffect(() => {
+    if (!clientId || !scriptReady || !buttonRef.current || !window.google?.accounts.id) return;
+
+    buttonRef.current.innerHTML = "";
+    window.google.accounts.id.initialize({
+      client_id: clientId,
+      ux_mode: "popup",
+      callback: (response) => {
+        if (!response.credential) return;
+        const profile = decodeGoogleCredential(response.credential);
+        if (profile) onSuccess(profile);
+      },
+    });
+    window.google.accounts.id.renderButton(buttonRef.current, {
+      type: "standard",
+      theme: "outline",
+      size: "large",
+      shape: "pill",
+      text: mode === "register" ? "signup_with" : "signin_with",
+      width: 376,
+      logo_alignment: "left",
+    });
+  }, [clientId, mode, onSuccess, scriptReady]);
+
+  if (!clientId) {
+    return (
+      <div className="rounded-2xl border border-dashed border-[#dfe3ea] bg-white/70 px-4 py-3 text-center text-xs font-semibold text-[#738095]">
+        Google Sign-In resmi butuh NEXT_PUBLIC_GOOGLE_CLIENT_ID.
+      </div>
+    );
+  }
+
+  return <div ref={buttonRef} className="flex min-h-12 justify-center" />;
 }
 
 export function AuthForm() {
@@ -167,13 +311,41 @@ export function AuthForm() {
   }
 
   async function onSubmit(values: AuthValues) {
+    if (mode === "register") {
+      saveRegisteredAccount({
+        email: values.email,
+        fullName: values.fullName ?? "",
+        createdAt: new Date().toISOString(),
+      });
+      clearErrors();
+      reset({ email: values.email, password: "", fullName: "", confirmPassword: "" });
+      setShowForm(false);
+      setMode("login");
+      setNotice("Akun berhasil dibuat. Silakan masuk dengan email dan password kamu.");
+      return;
+    }
+
+    const registeredAccount = getRegisteredAccount(values.email);
     const authUser = createAuthUser({
       email: values.email,
-      fullName: mode === "register" ? values.fullName : undefined,
+      fullName: registeredAccount?.fullName,
     });
 
     saveAuthUser(authUser);
-    router.push("/dashboard");
+    router.push(registeredAccount && !getSetupCompleted(values.email) ? "/profile/setup" : "/dashboard");
+  }
+
+  function continueWithGoogleProfile(profile: { email: string; fullName: string }) {
+    const registeredAccount = getRegisteredAccount(profile.email);
+    const nextAccount = registeredAccount ?? {
+      email: profile.email,
+      fullName: profile.fullName,
+      createdAt: new Date().toISOString(),
+    };
+
+    saveRegisteredAccount(nextAccount);
+    saveAuthUser(createAuthUser({ email: profile.email, fullName: nextAccount.fullName }));
+    router.push(getSetupCompleted(profile.email) ? "/dashboard" : "/profile/setup");
   }
 
   return (
@@ -246,14 +418,7 @@ export function AuthForm() {
                       ) : null}
                     </AnimatePresence>
                     <p className="text-center text-sm font-semibold text-[#738095]">Lanjutkan dengan</p>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="h-12 w-full border-[#dfe3ea] bg-white/90 text-[#2c3545] shadow-[0_3px_0_rgba(20,31,52,0.08)] hover:bg-white"
-                    >
-                      <GoogleMark />
-                      Google
-                    </Button>
+                    <GoogleSignInButton mode={mode} onSuccess={continueWithGoogleProfile} />
 
                     <div className="flex items-center gap-4 py-2 text-xs font-black text-[#9ba4b5]">
                       <span className="h-px flex-1 bg-[#dfe5ea]" />
